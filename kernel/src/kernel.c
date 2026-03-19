@@ -86,6 +86,13 @@ void Terminal_PutEntryAt(char c, uint8_t colour, size_t x, size_t y)
 
 void Terminal_PutChar(char c) 
 {
+    if(c == '\n') {
+        terminalColumn = 0;
+        if (++terminalRow == VGA_HEIGHT)
+			terminalRow = 0;
+        return;
+    }
+
 	Terminal_PutEntryAt(c, terminalColour, terminalColumn, terminalRow);
 	if (++terminalColumn == VGA_WIDTH) {
 		terminalColumn = 0;
@@ -110,6 +117,5 @@ void Kernel_Main(void)
 	/* Initialize terminal interface */
 	Terminal_Initialize();
 
-	/* Newline support is left as an exercise. */
 	Terminal_WriteString("Hello, kernel World!\n");
 }
