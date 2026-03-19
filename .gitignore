@@ -1,41 +1,13 @@
-# Prerequisites
-*.d
+# Build outputs
+build/
 
-# Compiled Object files
-*.slo
-*.lo
+# ISO staging directory (temporary)
+isodir/
+
+# Object files
 *.o
-*.obj
+*.bin
+*.iso
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-# debug information files
-*.dwo
+# Editor
+.vscode/
