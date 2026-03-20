@@ -1,8 +1,11 @@
 # Build outputs
 build/
 
-# ISO staging directory (temporary)
-isodir/
+# Bin directory
+bin/
+
+# ISO staging directory
+iso/
 
 # Object files
 *.o
