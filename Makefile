@@ -1,71 +1,33 @@
-# Toolchain
-CC = i686-elf-gcc
-AS = i686-elf-as
-LD = i686-elf-gcc
+GPPPARAMS = -m32 -fno-use-cxa-atexit -nostdlib -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore
+ASPARAMS = --32
+LDPARAMS = -melf_i386
 
-# Flags
-CFLAGS  = -c -std=gnu99 -ffreestanding -O2 -Wall -Wextra
-LDFLAGS = -T linker.ld -ffreestanding -O2 -nostdlib -lgcc
+objects = loader.o kernel.o
 
-# Directories
-BOOT_SRC  = boot/src
-BOOT_BIN  = build/boot/bin
-KERNEL_SRC = kernel/src
-KERNEL_BIN = build/kernel/bin
-BUILD_DIR  = build
-ISO_DIR = iso/boot/grub
+%.o: %.cpp
+	g++ $(GPPPARAMS) -o $@ -c $<
 
-# Source & Object Files
-BOOT_SRC_FILES   = $(wildcard $(BOOT_SRC)/*.s)
-KERNEL_SRC_FILES = $(wildcard $(KERNEL_SRC)/*.c)
+%.o: %.s
+	as $(ASPARAMS) -o $@ $<
 
-BOOT_OBJ   = $(patsubst $(BOOT_SRC)/%.s,   $(BOOT_BIN)/%.o,   $(BOOT_SRC_FILES))
-KERNEL_OBJ = $(patsubst $(KERNEL_SRC)/%.c, $(KERNEL_BIN)/%.o, $(KERNEL_SRC_FILES))
+kernel.bin: linker.ld $(objects)
+	ld $(LDPARAMS) -T $< -o $@ $(objects)
 
-# Final Output
-OS_IMAGE = $(BUILD_DIR)/OrangeOS.bin
-ISO_IMAGE = $(BUILD_DIR)/OrangeOS.iso
+install: kernel.bin
+	sudo cp $< /boot/kernel.bin
 
-# Rules
-all: $(OS_IMAGE) verify iso
+kernel.iso: kernel.bin
+	mkdir -p iso/boot/grub
+	cp $< iso/boot
+	@echo 'set timeout=0' >> iso/boot/grub/grub.cfg 
+	@echo 'set default=0' >> iso/boot/grub/grub.cfg
+	@echo 'menuentry "Orange OS" {' >> iso/boot/grub/grub.cfg 
+	@echo '	multiboot /boot/kernel.bin' >> iso/boot/grub/grub.cfg 
+	@echo '	boot' >> iso/boot/grub/grub.cfg 
+	@echo '}' >> iso/boot/grub/grub.cfg 
+	grub-mkrescue --output=$@ iso
+	rm -rf iso
 
-$(OS_IMAGE): $(BOOT_OBJ) $(KERNEL_OBJ) | $(BUILD_DIR)
-	$(LD) $(LDFLAGS) $(BOOT_OBJ) $(KERNEL_OBJ) -o $@
-
-$(BOOT_BIN)/%.o: $(BOOT_SRC)/%.s | $(BOOT_BIN)
-	$(AS) $< -o $@
-
-$(KERNEL_BIN)/%.o: $(KERNEL_SRC)/%.c | $(KERNEL_BIN)
-	$(CC) $(CFLAGS) $< -o $@
-
-$(BOOT_BIN):
-	mkdir -p $(BOOT_BIN)
-
-$(KERNEL_BIN):
-	mkdir -p $(KERNEL_BIN)
-
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
-
-iso: $(OS_IMAGE)
-	mkdir -p isodir/boot/grub
-	cp $(OS_IMAGE) isodir/boot/OrangeOS.bin
-	cp iso/boot/grub/grub.cfg isodir/boot/grub/grub.cfg
-	grub-mkrescue -o $(ISO_IMAGE) isodir
-	rm -rf isodir
-
-verify: $(OS_IMAGE)
-	@if grub-file --is-x86-multiboot $(OS_IMAGE); then \
-		echo "multiboot confirmed"; \
-	else \
-		echo "error: $(OS_IMAGE) is not multiboot"; \
-		exit 1; \
-	fi
-
-run: $(ISO_IMAGE)
-	qemu-system-i386 -cdrom $(ISO_IMAGE)
-
-clean:
-	rm -rf $(BUILD_DIR)
-
-.PHONY: all clean verify run
+run: kernel.iso
+	(killall VirtualBoxVM && sleep 1) || true
+	VirtualBoxVM --startvm "Orange OS" &
