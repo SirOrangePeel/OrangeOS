@@ -7,19 +7,26 @@ LDPARAMS = -melf_i386
 SRC_DIR = src
 BIN_DIR = bin
 
-# Sources and objects
-objects = $(BIN_DIR)/loader.o $(BIN_DIR)/kernel.o $(BIN_DIR)/gdt.o $(BIN_DIR)/port.o
+# Recursively find all source files
+ASM_SOURCES := $(shell find $(SRC_DIR) -name '*.s')
+CPP_SOURCES := $(shell find $(SRC_DIR) -name '*.cpp')
 
-# Compile C++ source files
-$(BIN_DIR)/%.o: $(SRC_DIR)/bootloader/%.s
+# Generate object file paths (flatten all sources into bin/)
+OBJECTS := $(patsubst $(SRC_DIR)/%.s, $(BIN_DIR)/%.o, $(ASM_SOURCES)) \
+           $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(CPP_SOURCES))
+
+# Preserve subdirectory structure under bin/
+$(BIN_DIR)/%.o: $(SRC_DIR)/%.s
+	@mkdir -p $(dir $@)
 	as $(ASPARAMS) -o $@ $<
 
-$(BIN_DIR)/%.o: $(SRC_DIR)/kernel/%.cpp
+$(BIN_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(dir $@)
 	g++ $(GPPPARAMS) -o $@ -I includes -c $<
 
 # Link kernel binary
-kernel.bin: linker.ld $(objects)
-	ld $(LDPARAMS) -T $< -o $@ $(objects)
+kernel.bin: linker.ld $(OBJECTS)
+	ld $(LDPARAMS) -T $< -o $@ $(OBJECTS)
 
 # Install to /boot
 install: kernel.bin
@@ -40,17 +47,18 @@ kernel.iso: kernel.bin
 
 # Run in VirtualBox
 run: kernel.iso
+	@if lsmod | grep -q "^kvm"; then \
+		bash toggle_kvm_for_vbox.sh; \
+	fi
 	(killall VirtualBoxVM && sleep 1) || true
 	VirtualBoxVM --startvm "Orange OS" &
 
 # Ensure bin/ exists before building
-$(objects): | $(BIN_DIR)
-
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
 clean:
-	rm -rf build/kernel.bin build/kernel.iso
+	rm -rf kernel.bin kernel.iso
 	rm -rf $(BIN_DIR)
 
 .PHONY: clean install run
