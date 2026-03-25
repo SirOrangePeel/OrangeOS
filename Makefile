@@ -51,7 +51,7 @@ kernel.iso: kernel.bin
 # Run in VirtualBox
 run: kernel.iso
 	@if lsmod | grep -q "^kvm"; then \
-		bash toggle_kvm_for_vbox.sh; \
+		bash src/toggle_kvm_for_vbox.sh; \
 	fi
 	(killall VirtualBoxVM && sleep 1) || true
 	VirtualBoxVM --startvm "Orange OS" &
