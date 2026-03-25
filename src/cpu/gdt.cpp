@@ -1,59 +1,63 @@
 #include "gdt.h"
 
 GlobalDescriptorTable::GlobalDescriptorTable()
-: nullSegmentSelector(0, 0, 0),
-unusedSegmentSelector(0, 0, 0),
-codeSegmentSelector(0, 64*1024*1024, 0x9A),
-dataSegmentSelector(0, 64*1024*1024, 0x92) {
+    : nullSegmentSelector(0, 0, 0),
+      unusedSegmentSelector(0, 0, 0),
+      codeSegmentSelector(0, 64*1024*1024, 0x9A),  // 64MB, ring-0 executable
+      dataSegmentSelector(0, 64*1024*1024, 0x92)   // 64MB, ring-0 read/write
+{
+    // Build the GDTR descriptor (limit + base) and load it via lgdt
     uint32_t i[2];
     i[1] = (uint32_t)this;
     i[0] = sizeof(GlobalDescriptorTable) << 16;
-
     asm volatile("lgdt (%0)": : "p" (((uint8_t *) i) + 2));
-
 }
 
 GlobalDescriptorTable::~GlobalDescriptorTable() {
 }
 
+// Offset of dataSegmentSelector from GDT base, used as the segment selector value
 uint16_t GlobalDescriptorTable::DataSegmentSelector() {
     return (uint8_t*)&dataSegmentSelector - (uint8_t*)this;
 }
 
+// Offset of codeSegmentSelector from GDT base, used as the segment selector value
 uint16_t GlobalDescriptorTable::CodeSegmentSelector() {
     return (uint8_t*)&codeSegmentSelector - (uint8_t*)this;
 }
 
 GlobalDescriptorTable::SegmentDescriptor::SegmentDescriptor(uint32_t base, uint32_t limit, uint8_t flags) {
-    uint8_t * target = (uint8_t*)this;
+    uint8_t* target = (uint8_t*)this;
 
-    if(limit <= 65536)
-    {
+    if (limit <= 65536) {
+        // Byte granularity: limit fits in 16 bits
         target[6] = 0x40;
     } else {
-        if((limit & 0xFFF) != 0xFFF)
+        // Page granularity (4KB pages): scale limit down by 4KB
+        if ((limit & 0xFFF) != 0xFFF)
             limit = (limit >> 12) - 1;
         else
             limit = limit >> 12;
-
         target[6] = 0xC0;
     }
 
+    // Encode the 20-bit limit across bytes 0, 1, and the low nibble of byte 6
     target[0] = limit & 0xFF;
     target[1] = (limit >> 8) & 0xFF;
-    target[6] |= (limit >> 16) &0xF;
+    target[6] |= (limit >> 16) & 0xF;
 
+    // Encode the 32-bit base address across bytes 2, 3, 4, and 7
     target[2] = base & 0xFF;
     target[3] = (base >> 8) & 0xFF;
     target[4] = (base >> 16) & 0xFF;
     target[7] = (base >> 24) & 0xFF;
 
-    target[5] = flags;
-
+    target[5] = flags; // Access byte (type, privilege, present)
 }
 
+// Reconstruct the 32-bit base address from the descriptor bytes
 uint32_t GlobalDescriptorTable::SegmentDescriptor::Base() {
-    uint8_t * target = (uint8_t*)this;
+    uint8_t* target = (uint8_t*)this;
     uint32_t result = target[7];
     result = (result << 8) + target[4];
     result = (result << 8) + target[3];
@@ -61,13 +65,15 @@ uint32_t GlobalDescriptorTable::SegmentDescriptor::Base() {
     return result;
 }
 
+// Reconstruct the 32-bit limit, re-expanding page-granular values
 uint32_t GlobalDescriptorTable::SegmentDescriptor::Limit() {
-    uint8_t * target = (uint8_t*)this;
+    uint8_t* target = (uint8_t*)this;
     uint32_t result = target[6] & 0xF;
     result = (result << 8) + target[1];
     result = (result << 8) + target[0];
 
-    if((target[6] & 0xC0) == 0xC0)
+    // If page granularity flag is set, scale limit back up to bytes
+    if ((target[6] & 0xC0) == 0xC0)
         result = (result << 12) | 0xFFF;
 
     return result;
