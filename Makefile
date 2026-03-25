@@ -24,6 +24,9 @@ $(BIN_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	g++ $(GPPPARAMS) -o $@ -I includes -c $<
 
+# Building without running
+all: kernel.iso
+
 # Link kernel binary
 kernel.bin: linker.ld $(OBJECTS)
 	ld $(LDPARAMS) -T $< -o $@ $(OBJECTS)
@@ -61,4 +64,4 @@ clean:
 	rm -rf kernel.bin kernel.iso
 	rm -rf $(BIN_DIR)
 
-.PHONY: clean install run
+.PHONY: clean install run all
