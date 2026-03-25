@@ -30,10 +30,10 @@ int_bottom:
     pushl %fs
     pushl %gs
 
+    push $0
     push %esp
-    push (interruptNumber)
     call _ZN16InterruptManager15handleInterruptEhj
-    addl %esp, 6
+    addl $8, %esp
     movl %eax, %esp
 
     popl %gs
@@ -42,9 +42,10 @@ int_bottom:
     popl %ds
     popa
 
-_ZN16InterruptManager22IgnoreInterruptRequestEv:
-    
     iret
+_ZN16InterruptManager22IgnoreInterruptRequestEv:
+    movb $0xFF, (interruptNumber)
+    jmp int_bottom
 
 .data
     interruptNumber: .byte 0
