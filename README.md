@@ -55,7 +55,7 @@ OrangeOS/
 │   │   ├── interruptstubs.s # Low-level interrupt stubs in assembly
 │   │   └── port.cpp        # Port I/O implementation
 |   ├── drivers/
-|   |   ├── keyboardDriver.cpp # Keyboard Driver implementation
+|   |   └── keyboardDriver.cpp # Keyboard Driver implementation
 │   └── kernel/
 │       └── kernel.cpp  # Kernel entry point
 ├── .gitignore
