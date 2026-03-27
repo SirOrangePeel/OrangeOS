@@ -53,6 +53,8 @@ OrangeOS/
 │   │   ├── interrupts.cpp  # Interrupt handling implementation
 │   │   ├── interruptstubs.s # Low-level interrupt stubs in assembly
 │   │   └── port.cpp        # Port I/O implementation
+|   ├── drivers/
+|   |   ├── keyboardDriver.cpp
 │   └── kernel/
 │       └── kernel.cpp  # Kernel entry point
 ├── .gitignore
@@ -72,7 +74,7 @@ OrangeOS/
 - [x] Interrupts & IRQ handling (IDT, PIC remapping)
  
 ### Phase 2 — Basic Hardware Drivers
-- [ ] Keyboard driver
+- [x] Keyboard driver
 - [ ] Mouse driver
 - [ ] Driver abstractions
 - [ ] PCI (Peripheral Component Interconnect)
