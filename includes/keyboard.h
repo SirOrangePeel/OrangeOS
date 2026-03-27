@@ -9,8 +9,12 @@ class KeyboardDriver : public InterruptHandler {
     Port8bit dataPort;
     Port8bit commandPort;
 
+    bool shift;
+    bool capslock;
+
     private:
         static char scancodeToASCII[];
+        static char scancodeToASCIIShifted[];
 
     public:
         KeyboardDriver(InterruptManager* manager);

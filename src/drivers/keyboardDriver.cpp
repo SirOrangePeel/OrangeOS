@@ -62,6 +62,67 @@ char KeyboardDriver::scancodeToASCII[] = {
     ' ',  // 0x39 - Space
 };
 
+char KeyboardDriver::scancodeToASCIIShifted[] = {
+    0,      // 0x00 - Error
+    0,      // 0x01 - Escape
+    '!',    // 0x02
+    '@',    // 0x03
+    '#',    // 0x04
+    '$',    // 0x05
+    '%',    // 0x06
+    '^',    // 0x07
+    '&',    // 0x08
+    '*',    // 0x09
+    '(',    // 0x0A
+    ')',    // 0x0B
+    '_',    // 0x0C
+    '+',    // 0x0D
+    0,      // 0x0E - Backspace
+    0,      // 0x0F - Tab
+    'Q',    // 0x10
+    'W',    // 0x11
+    'E',    // 0x12
+    'R',    // 0x13
+    'T',    // 0x14
+    'Y',    // 0x15
+    'U',    // 0x16
+    'I',    // 0x17
+    'O',    // 0x18
+    'P',    // 0x19
+    '{',    // 0x1A
+    '}',    // 0x1B
+     0,     // 0x1C - Enter
+     0,     // 0x1D - Left Ctrl
+    'A',    // 0x1E
+    'S',    // 0x1F
+    'D',    // 0x20
+    'F',    // 0x21
+    'G',    // 0x22
+    'H',    // 0x23
+    'J',    // 0x24
+    'K',    // 0x25
+    'L',    // 0x26
+    ':',    // 0x27
+    '"',    // 0x28
+    '~',    // 0x29
+    0,      // 0x2A - Left Shift
+    '|',    // 0x2B
+    'Z',    // 0x2C
+    'X',    // 0x2D
+    'C',    // 0x2E
+    'V',    // 0x2F
+    'B',    // 0x30
+    'N',    // 0x31
+    'M',    // 0x32
+    '<',    // 0x33
+    '>',    // 0x34
+    '?',    // 0x35
+    0,      // 0x36 - Right Shift
+    0,      // 0x37 - (keypad *)
+    0,      // 0x38 - Left Alt
+    ' ',    // 0x39 - Space
+};
+
 
 KeyboardDriver::KeyboardDriver(InterruptManager* manager) 
 : InterruptHandler(0x21, manager),
@@ -84,19 +145,50 @@ KeyboardDriver::~KeyboardDriver() {}
 uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp) {
     uint8_t key = dataPort.Read();
 
-    //Key-Down events only (0x80+ are key-up)
-    if (key < 0x80) {
-        if (key < sizeof(scancodeToASCII) && scancodeToASCII[key] != 0) {
-            char str[2] = { scancodeToASCII[key], '\0' };
-            printf(str);
-        } else if (key == 0x1C) {
-            printf("\n");
-        } else if(key == 0x0E) {
-            // Can't handle backspaces yet :)
-        }
+    // Handle key-up events first (scancodes >= 0x80)
+    if(key & 0x80) {
+        uint8_t released = key & 0x7F;
+        if(released == 0x2A || released == 0x36)
+            shift = false;
+
+        return esp;
     }
 
-    // Key-up events are ignored.
+    //Key-Down events
+    switch(key) {
+        case 0x2A: case 0x36:   // Letf/Right shift
+            shift = true;
+            break;
+        case 0x3A:              // Capslock
+            capslock = !capslock;
+            break;
+        case 0x1C:              // Enter
+            printf("\n");
+            break;
+        case 0x0E:              // Backspace
+            // Not handled yet
+            break;
+        default:
+            if(key < sizeof(scancodeToASCII) && scancodeToASCII[key] != 0) {
+                // Caps lock only affects letters, shift affects everything
+                bool upper = capslock ^ shift;
+                char c;
+                if(shift)
+                    c = scancodeToASCIIShifted[key];
+                else
+                    c = scancodeToASCII[key];
+
+                if(capslock && !shift && c >= 'a' && c <= 'z')
+                    c -= 32;
+                else if(capslock && shift && c >= 'A' && c <= 'Z')
+                    c += 32;
+
+                char str[2] = { c, '\0' };
+                printf(str);
+                
+            }
+            break;
+    }
 
     return esp;
 }
