@@ -1,7 +1,7 @@
 .set IRQ_BASE, 0x20   # Hardware IRQs are remapped to vectors 0x20-0x2F by the PIC
 
 .section .text
-.extern _ZN16InterruptManager15handleInterruptEhj          # InterruptManager::handleInterrupt()
+.extern _ZN16InterruptManager15HandleInterruptEhj          # InterruptManager::HandleInterrupt()
 .global _ZN16InterruptManager22IgnoreInterruptRequestEv    # InterruptManager::IgnoreInterruptRequest()
 
 # Macro for CPU exceptions: stores the exception number and jumps to common handler
@@ -16,7 +16,7 @@ _ZN16InterruptManager16HandleException\num\()Ev:
 .macro HandleInterruptRequest num
 .global _ZN16InterruptManager26HandleInterruptRequest\num\()Ev
 _ZN16InterruptManager26HandleInterruptRequest\num\()Ev:
-    movb $\num + IRQ_BASE, (interruptNumber)
+    movb $(\num + IRQ_BASE), (interruptNumber)
     jmp int_bottom
 .endm
 
@@ -33,7 +33,8 @@ int_bottom:
 
     push %esp                                        # Pass current stack pointer as argument
     push (interruptNumber)                           # Pass interrupt number as argument
-    call _ZN16InterruptManager15handleInterruptEhj  # Returns (possibly new) esp in %eax
+    call _ZN16InterruptManager15HandleInterruptEhj  # Returns (possibly new) esp in %eax
+    add %esp, 6
     movl %eax, %esp                                  # Switch to returned stack pointer
 
     popl %gs

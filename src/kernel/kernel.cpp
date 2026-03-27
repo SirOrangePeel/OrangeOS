@@ -1,6 +1,7 @@
 #include "types.h"
 #include "gdt.h"
 #include "interrupts.h"
+#include "keyboard.h"
 
 void printf(char* data) {
     static uint16_t* videoMemory = (uint16_t*)0xB8000;
@@ -50,6 +51,8 @@ extern "C" void KernelMain(void* multibootStructure, uint32_t /* magicNumber */)
 
     GlobalDescriptorTable gdt;
     InterruptManager interrupts(&gdt);
+
+    KeyboardDriver KeyboardDriver(&interrupts);
 
     interrupts.Activate();
 
