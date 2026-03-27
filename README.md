@@ -43,6 +43,7 @@ OrangeOS/
 ├── includes/
 │   ├── gdt.h           # Global Descriptor Table declarations
 │   ├── interrupts.h    # Interrupt handling declarations
+|   ├── keyboard.h      # Keyboard function definitions
 │   ├── port.h          # Port I/O declarations
 │   └── types.h         # Common type definitions
 ├── src/
@@ -54,7 +55,7 @@ OrangeOS/
 │   │   ├── interruptstubs.s # Low-level interrupt stubs in assembly
 │   │   └── port.cpp        # Port I/O implementation
 |   ├── drivers/
-|   |   ├── keyboardDriver.cpp
+|   |   ├── keyboardDriver.cpp # Keyboard Driver implementation
 │   └── kernel/
 │       └── kernel.cpp  # Kernel entry point
 ├── .gitignore
