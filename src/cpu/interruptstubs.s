@@ -34,7 +34,7 @@ int_bottom:
     push %esp                                        # Pass current stack pointer as argument
     push (interruptNumber)                           # Pass interrupt number as argument
     call _ZN16InterruptManager15HandleInterruptEhj  # Returns (possibly new) esp in %eax
-    add %esp, 6
+    add $8, %esp
     movl %eax, %esp                                  # Switch to returned stack pointer
 
     popl %gs

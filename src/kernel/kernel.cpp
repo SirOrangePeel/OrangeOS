@@ -51,9 +51,7 @@ extern "C" void KernelMain(void* multibootStructure, uint32_t /* magicNumber */)
 
     GlobalDescriptorTable gdt;
     InterruptManager interrupts(&gdt);
-
     KeyboardDriver KeyboardDriver(&interrupts);
-
     interrupts.Activate();
 
     while(1);

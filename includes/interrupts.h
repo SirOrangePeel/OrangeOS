@@ -24,7 +24,7 @@ class InterruptManager {
 
     protected:
 
-        static InterruptManager* ActiveInterruputManager;
+        static InterruptManager* ActiveInterruptManager;
         InterruptHandler* handlers[256];
 
         // Single 8-byte IDT entry pointing to an interrupt handler
