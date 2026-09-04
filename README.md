@@ -4,13 +4,13 @@
  
 ## About
  
-MyOS is a bare-metal operating system written in C++/Assembly. This project is a work in progress — currently in the earliest stages of development.
+OrangOS is a bare-metal operating system written in C++/Assembly. This project is a work in progress — currently in the earliest stages of development.
  
 ## Current Features
  
 - Bootloader — the OS successfully boots on [real hardware / QEMU / Bochs]
 - Prints `Hello World!` to the screen
-- Basic interrupt handling — a test software interrupt is fired from `KernelMain()`
+- Basic interrupt handling — Allows for keyboard inputs
  
 ## Getting Started
  
