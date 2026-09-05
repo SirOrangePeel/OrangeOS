@@ -10,7 +10,7 @@ OrangOS is a bare-metal operating system written in C++/Assembly. This project i
  
 - Bootloader — the OS successfully boots on [real hardware / QEMU / Bochs]
 - Prints `Hello World!` to the screen
-- Basic interrupt handling — Allows for keyboard inputs
+- Basic interrupt handling — Allows for keyboard inputs, and can detect mouse movement
  
 ## Getting Started
  
@@ -76,7 +76,7 @@ OrangeOS/
  
 ### Phase 2 — Basic Hardware Drivers
 - [x] Keyboard driver
-- [ ] Mouse driver
+- [x] Mouse driver
 - [ ] Driver abstractions
 - [ ] PCI (Peripheral Component Interconnect)
 - [ ] Base Address Registers (BARs)
