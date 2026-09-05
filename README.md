@@ -4,13 +4,13 @@
  
 ## About
  
-MyOS is a bare-metal operating system written in C++/Assembly. This project is a work in progress — currently in the earliest stages of development.
+OrangOS is a bare-metal operating system written in C++/Assembly. This project is a work in progress — currently in the earliest stages of development.
  
 ## Current Features
  
 - Bootloader — the OS successfully boots on [real hardware / QEMU / Bochs]
 - Prints `Hello World!` to the screen
-- Basic interrupt handling — a test software interrupt is fired from `KernelMain()`
+- Basic interrupt handling — Allows for keyboard inputs
  
 ## Getting Started
  
@@ -43,6 +43,7 @@ OrangeOS/
 ├── includes/
 │   ├── gdt.h           # Global Descriptor Table declarations
 │   ├── interrupts.h    # Interrupt handling declarations
+|   ├── keyboard.h      # Keyboard function definitions
 │   ├── port.h          # Port I/O declarations
 │   └── types.h         # Common type definitions
 ├── src/
@@ -53,6 +54,8 @@ OrangeOS/
 │   │   ├── interrupts.cpp  # Interrupt handling implementation
 │   │   ├── interruptstubs.s # Low-level interrupt stubs in assembly
 │   │   └── port.cpp        # Port I/O implementation
+|   ├── drivers/
+|   |   └── keyboardDriver.cpp # Keyboard Driver implementation
 │   └── kernel/
 │       └── kernel.cpp  # Kernel entry point
 ├── .gitignore
@@ -72,7 +75,7 @@ OrangeOS/
 - [x] Interrupts & IRQ handling (IDT, PIC remapping)
  
 ### Phase 2 — Basic Hardware Drivers
-- [ ] Keyboard driver
+- [x] Keyboard driver
 - [ ] Mouse driver
 - [ ] Driver abstractions
 - [ ] PCI (Peripheral Component Interconnect)
