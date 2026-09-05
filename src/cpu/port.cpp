@@ -21,7 +21,6 @@ uint8_t Port8bit::Read() {
 Port8bitSlow::Port8bitSlow(uint16_t portNumber) : Port8bit(portNumber) {}
 Port8bitSlow::~Port8bitSlow() {}
 
-// Two jumps after outb act as a short busy-wait for slow legacy hardware (e.g. PIC)
 void Port8bitSlow::Write(uint8_t data) {
     __asm__ volatile("outb %0, %1\njmp 1f\njmp 1f\n1:" : : "a" (data), "Nd" (portNumber));
 }

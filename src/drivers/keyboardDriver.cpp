@@ -128,24 +128,26 @@ KeyboardDriver::KeyboardDriver(InterruptManager* manager)
 : InterruptHandler(0x21, manager),
   dataPort(0x60),
   commandPort(0x64) {
+    // Flushes any leftover data in PS/2 buffer 
     while(commandPort.Read() & 0x1)
         dataPort.Read();
 
-    commandPort.Write(0xAE);    // Activates Keyboard interrupts
-    commandPort.Write(0x20);    // Get current state
+    commandPort.Write(0xAE);    // Enable keyboard interface
+    commandPort.Write(0x20);    // Get config byte
     uint8_t status = (dataPort.Read() | 1) & ~0x10; 
-    commandPort.Write(0x60);    // Set current state
-    dataPort.Write(status);     // Write current state back
+    commandPort.Write(0x60);  
+    dataPort.Write(status);   
 
-    dataPort.Write(0xF4);       // Activate Keyboard (I think)
+    dataPort.Write(0xF4);
 }
 
 KeyboardDriver::~KeyboardDriver() {}
 
 uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp) {
+    // Reads scancode
     uint8_t key = dataPort.Read();
 
-    // Handle key-up events first (scancodes >= 0x80)
+    // Bit 7 is the key release event
     if(key & 0x80) {
         uint8_t released = key & 0x7F;
         if(released == 0x2A || released == 0x36)
@@ -154,9 +156,8 @@ uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp) {
         return esp;
     }
 
-    //Key-Down events
     switch(key) {
-        case 0x2A: case 0x36:   // Letf/Right shift
+        case 0x2A: case 0x36:   // Left and Right shift
             shift = true;
             break;
         case 0x3A:              // Capslock
@@ -165,12 +166,10 @@ uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp) {
         case 0x1C:              // Enter
             printf("\n");
             break;
-        case 0x0E:              // Backspace
-            // Not handled yet
+        case 0x0E:              // Backspace (Not handled yet)
             break;
         default:
             if(key < sizeof(scancodeToASCII) && scancodeToASCII[key] != 0) {
-                // Caps lock only affects letters, shift affects everything
                 bool upper = capslock ^ shift;
                 char c;
                 if(shift)

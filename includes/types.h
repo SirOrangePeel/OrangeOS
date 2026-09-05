@@ -1,3 +1,8 @@
+/*
+*   Because this is a bare-metal kernel, no stdint.h exists.
+*   We manually recreate the standard fixed int types
+*/
+
 #ifndef __TYPES_H
 #define __TYPES_H
     

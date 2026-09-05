@@ -1,36 +1,37 @@
 #ifndef __GDT_H
 #define __GDT_H
-#include "types.h"
+    #include "types.h"
 
-// Manages the x86 Global Descriptor Table (GDT) for memory segmentation
-class GlobalDescriptorTable {
-public:
-    // Represents a single 8-byte GDT entry describing a memory segment
-    class SegmentDescriptor {
-        private:
-            uint16_t limit_lo;       // Lower 16 bits of segment limit
-            uint16_t base_lo;        // Lower 16 bits of base address
-            uint8_t  base_hi;        // Bits 16-23 of base address
-            uint8_t  type;           // Segment type and access flags
-            uint8_t  flags_limit_hi; // Upper 4 bits of limit + granularity flags
-            uint8_t  base_vhi;       // Bits 24-31 of base address
-        public:
-            SegmentDescriptor(uint32_t base, uint32_t limit, uint8_t type);
-            uint32_t Base();
-            uint32_t Limit();
-    } __attribute__((packed)); // Prevent compiler padding
+    class GlobalDescriptorTable {
+    public:
+        class SegmentDescriptor {
+            private:
+                uint16_t limit_lo;          // Low 16 bits of segment size
+                uint16_t base_lo;           // Low 12 bits of segment start address
+                uint8_t  base_hi;           // Next 8 bits of segment start address
+                uint8_t  type;              // Access flags
+                uint8_t  flags_limit_hi;    // Upper 4 bits of limit + granularity flags
+                uint8_t  base_vhi;          // High 8 bits of segment start address
+            public:
+                SegmentDescriptor(uint32_t base, uint32_t limit, uint8_t type);
+                uint32_t Base();
+                uint32_t Limit();
+        } __attribute__((packed)); // No padding
 
-private:
-    SegmentDescriptor nullSegmentSelector;    // Required null descriptor (index 0)
-    SegmentDescriptor unusedSegmentSelector;  // Unused placeholder descriptor
-    SegmentDescriptor codeSegmentSelector;    // Executable code segment
-    SegmentDescriptor dataSegmentSelector;    // Read/write data segment
+    private:
+        // Segments
+        SegmentDescriptor nullSegmentSelector;      // Required by CPU, always zero
+        SegmentDescriptor unusedSegmentSelector;    // padding/placeholder
+        SegmentDescriptor codeSegmentSelector;      // Executable data
+        SegmentDescriptor dataSegmentSelector;      // Read/Wrtie data
 
-public:
-    GlobalDescriptorTable();
-    ~GlobalDescriptorTable();
-    uint16_t CodeSegmentSelector();  // Returns byte offset of code segment
-    uint16_t DataSegmentSelector();  // Returns byte offset of data segment
-};
+    public:
+        GlobalDescriptorTable();
+        ~GlobalDescriptorTable();
+
+        // Byte offsets for each descriptor 
+        uint16_t CodeSegmentSelector();  
+        uint16_t DataSegmentSelector();  
+    };
 
 #endif

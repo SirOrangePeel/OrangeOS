@@ -1,75 +1,75 @@
 #ifndef __INTERRUPTS_H
 #define __INTERRUPTS_H
-#include "types.h"
-#include "port.h"
-#include "gdt.h"
+    #include "types.h"
+    #include "port.h"
+    #include "gdt.h"
+    #define TOTAL_INTERRUPTS 256
 
-class InterruptManager;
+    class InterruptManager;
 
-class InterruptHandler {
-    protected:
-        uint8_t interruptNumber;
-        InterruptManager* interruptManager;
+    class InterruptHandler {
+        protected:
+            uint8_t interruptNumber;
+            InterruptManager* interruptManager;
 
-        InterruptHandler(uint8_t interruptNumber, InterruptManager* interruptManager);
-        ~InterruptHandler();
+            InterruptHandler(uint8_t interruptNumber, InterruptManager* interruptManager);
+            ~InterruptHandler();
 
-    public:
-        virtual uint32_t HandleInterrupt(uint32_t esp);
-};
+        public:
+            virtual uint32_t HandleInterrupt(uint32_t esp);
+    };
 
-// Manages the x86 Interrupt Descriptor Table (IDT) and PIC initialisation
-class InterruptManager {
-    friend class InterruptHandler;
+    class InterruptManager {
+        friend class InterruptHandler;
 
-    protected:
+        protected:
 
-        static InterruptManager* ActiveInterruptManager;
-        InterruptHandler* handlers[256];
+            static InterruptManager* ActiveInterruptManager;
+            InterruptHandler* handlers[TOTAL_INTERRUPTS];
 
-        // Single 8-byte IDT entry pointing to an interrupt handler
-        struct GateDescriptor {
-            uint16_t handlerAddress_lo;         // Lower 16 bits of handler address
-            uint16_t gdtCodeSegmentSelector;    // GDT selector for the handler's code segment
-            uint8_t  reserved;                  // Must be zero
-            uint8_t  access;                    // Present, privilege level, and gate type flags
-            uint16_t handlerAddress_hi;         // Upper 16 bits of handler address
-        } __attribute__((packed));
+            // Handler address is split into 2 halves, for backwards compatibility
+            struct GateDescriptor {
+                uint16_t handlerAddress_lo;     
+                uint16_t gdtCodeSegmentSelector;
+                uint8_t  reserved;                  
+                uint8_t  access;                    
+                uint16_t handlerAddress_hi;         
+            } __attribute__((packed));
 
-        static GateDescriptor interruptDescriptorTable[256]; // The full 256-entry IDT
+            static GateDescriptor interruptDescriptorTable[TOTAL_INTERRUPTS];
 
-        // Loaded into the IDTR register via lidt
-        struct InterruptDescriptorTablePointer {
-            uint16_t size;  // Size of IDT in bytes minus 1
-            uint32_t base;  // Linear address of IDT
-        } __attribute__((packed));
+            struct InterruptDescriptorTablePointer {
+                uint16_t size; 
+                uint32_t base;  
+            } __attribute__((packed));
 
-        // Writes a single entry into the IDT
-        static void SetInterruptDescriptorTableEntry(
-            uint8_t  interruptNumber,
-            uint16_t gdtCodeSegmentOffset,
-            void     (*handler)(),
-            uint8_t  DescriptorPriviledgeLevel,
-            uint8_t  DescriptorType
-        );
+            static void SetInterruptDescriptorTableEntry(
+                uint8_t  interruptNumber,
+                uint16_t gdtCodeSegmentOffset,
+                void     (*handler)(),
+                uint8_t  DescriptorPriviledgeLevel,
+                uint8_t  DescriptorType
+            );
 
-        // I/O ports for the master and slave 8259 PICs
-        Port8bitSlow picMasterCommand;
-        Port8bitSlow picMasterData;
-        Port8bitSlow picSlaveCommand;
-        Port8bitSlow picSlaveData;
+            // 4 ports for talking to the 2 PIC chips
+            // Uses slow because PIC needs small delay
+            Port8bitSlow picMasterCommand;
+            Port8bitSlow picMasterData;
+            Port8bitSlow picSlaveCommand;
+            Port8bitSlow picSlaveData;
 
-    public:
-        InterruptManager(GlobalDescriptorTable* gdt);
-        ~InterruptManager();
-        void Activate(); // Enables interrupts (sti)
-        void Deactivate();
+        public:
+            InterruptManager(GlobalDescriptorTable* gdt);
+            ~InterruptManager();
+            void Activate(); 
+            void Deactivate();
 
-        static uint32_t HandleInterrupt(uint8_t interruptNumber, uint32_t esp);
-        uint32_t DoHandleInterrupt(uint8_t interruptNumber, uint32_t esp);
-        static void IgnoreInterruptRequest();       // Default no-op handler
-        static void HandleInterruptRequest0x00();   // IRQ0 – timer
-        static void HandleInterruptRequest0x01();   // IRQ1 – keyboard
-};
+            static uint32_t HandleInterrupt(uint8_t interruptNumber, uint32_t esp);
+            uint32_t DoHandleInterrupt(uint8_t interruptNumber, uint32_t esp);
+            static void IgnoreInterruptRequest();       
+            static void HandleInterruptRequest0x00();   
+            static void HandleInterruptRequest0x01();   
+            static void HandleInterruptRequest0x0C();   
+    };
 
 #endif

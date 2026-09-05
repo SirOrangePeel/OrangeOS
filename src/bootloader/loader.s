@@ -1,7 +1,7 @@
-# Multiboot magic values — identify this as a bootable kernel image to GRUB
-.set MAGIC,    0x1BADB002
-.set FLAGS,    (1<<0 | 1<<1)   # Flags: align modules on page boundaries, provide memory map
-.set CHECKSUM, -(MAGIC + FLAGS) # Must sum to zero with MAGIC and FLAGS
+# Multiboot header
+.set MAGIC,    0x1BADB002           # For GRUB to use this bootloader
+.set FLAGS,    (1<<0 | 1<<1)        # bit 0 = allign modules to page boundaries, bit 1 = provide memory map 
+.set CHECKSUM, -(MAGIC + FLAGS)     # Makes sure the three values sum to 0
 
 .section .multiboot
     .long MAGIC
@@ -9,22 +9,23 @@
     .long CHECKSUM
 
 .section .text
-.extern CallConstructors  # Runs global C++ constructors before main
+.extern CallConstructors
 .extern KernelMain
 .global loader
 
 loader:
-    mov $kernel_stack, %esp   # Set up the initial kernel stack
-    call CallConstructors
-    push %eax                 # Push multiboot magic number (passed by bootloader)
-    push %ebx                 # Push multiboot info struct pointer (passed by bootloader)
-    call KernelMain
+    mov $kernel_stack, %esp         # Set stack pointer to kernel stack
+    call CallConstructors           # Calls all C++ global/static object constructors
+    push %eax                       # Push multiboot magic number
+    push %ebx                       # Push to multiboot info structure
+    call KernelMain                 # Start the kernel
 
 _stop:
-    cli        # Disable interrupts
-    hlt        # Halt the CPU
-    jmp _stop  # Safety loop in case of spurious wake-up
+    cli                             # Disable interrupts 
+    hlt                             # Halt CPU
+    jmp _stop  
 
+# Reserves 2MB of uninitialized memory for kernel
 .section .bss
-.space 2*1024*1024  # 2 MiB kernel stack space
-kernel_stack:
+.space 2*1024*1024  
+kernel_stack:                       # Top of space
